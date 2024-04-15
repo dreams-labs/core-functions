@@ -46,6 +46,7 @@ def human_format(num):
 def get_secret(
       secret_name
       ,version='latest'
+      ,verbose=False
     ):
     '''
     retrieves a secret. works within bigquery python notebooks and needs
@@ -70,10 +71,34 @@ def get_secret(
         request = secretmanager_v1.AccessSecretVersionRequest(name=secret_path)
         response = client.access_secret_version(request=request)
         secret_value = response.payload.data.decode('UTF-8')
-    except:
+    except Exception as e:
         # syntax that works in GCF
         secret_value = os.environ.get(secret_name)
+        if verbose:
+            print(e)
 
     return secret_value
 
 
+def bigquery_run_sql(
+        query_sql
+        ,location='US'
+        ,project = 'western-verve-411004'
+    ):
+    '''
+    returns the blockchain and contract address of a coin on coingecko
+    documentation: https://cloud.google.com/python/docs/reference/bigquery/latest
+
+    param: query_sql <string> the query to run
+    param: location <string> the location of the bigquery project
+    param: project <string> the project ID of the bigquery project
+    return: query_df <dataframe> the query result
+    '''
+
+    # Create a BigQuery client object.
+    client = bigquery.Client(project=project,location=location)
+
+    query_job = client.query(query_sql)
+    query_df = query_job.to_dataframe()
+
+    return query_df
