@@ -46,7 +46,6 @@ def human_format(num):
 def get_secret(
       secret_name
       ,version='latest'
-      ,verbose=False
     ):
     '''
     retrieves a secret. works within bigquery python notebooks and needs
@@ -64,18 +63,22 @@ def get_secret(
         # load credentials from environmental variables
         load_dotenv()
         service_account_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
-        credentials = service_account.Credentials.from_service_account_file(service_account_path)
+
+        if service_account_path:
+            # if path is found use it for credentials (works in vscode)
+            credentials = service_account.Credentials.from_service_account_file(service_account_path)
+            client = secretmanager_v1.SecretManagerServiceClient(credentials=credentials)
+        else:
+            # if path isn't found, use default env variables (works in bigquery notebooks)
+            client = secretmanager_v1.SecretManagerServiceClient()
 
         # initiate client and request secret
-        client = secretmanager_v1.SecretManagerServiceClient(credentials=credentials)
         request = secretmanager_v1.AccessSecretVersionRequest(name=secret_path)
         response = client.access_secret_version(request=request)
         secret_value = response.payload.data.decode('UTF-8')
-    except Exception as e:
+    except:
         # syntax that works in GCF
         secret_value = os.environ.get(secret_name)
-        if verbose:
-            print(e)
 
     return secret_value
 
