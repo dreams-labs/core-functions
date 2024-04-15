@@ -1,0 +1,12 @@
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+
+# environments
+.env
+
+# other local files
+dev/
+.DS_Store
+testfile.py
+scratch.py
