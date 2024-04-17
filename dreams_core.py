@@ -85,22 +85,32 @@ def get_secret(
 
 def bigquery_run_sql(
         query_sql
+        ,service_account_secret='service_account_eng_general'
         ,location='US'
         ,project = 'western-verve-411004'
     ):
     '''
-    returns the blockchain and contract address of a coin on coingecko
-    documentation: https://cloud.google.com/python/docs/reference/bigquery/latest
+    runs a query and returns results as a dataframe. the service account credentials to 
+    grant access are autofilled to a general service account. there are likely security
+    optimizations that will need to be done in the future. 
 
     param: query_sql <string> the query to run
+    param: service_account_secret <json> the name of the GCP secrets manager secret that \
+        contains the service account jeson data
     param: location <string> the location of the bigquery project
     param: project <string> the project ID of the bigquery project
     return: query_df <dataframe> the query result
     '''
+    # prepare credentials using a service account stored in GCP secrets manager
+    service_account_info = json.loads(get_secret(service_account_secret))
+    scopes=["https://www.googleapis.com/auth/cloud-platform"]
+    credentials = service_account.Credentials.from_service_account_info(
+        service_account_info
+        ,scopes=scopes
+    )
 
-    # Create a BigQuery client object.
-    client = bigquery.Client(project=project,location=location)
-
+    # create a bigquery client object and run the query
+    client = bigquery.Client(project=project,location=location,credentials=credentials)
     query_job = client.query(query_sql)
     query_df = query_job.to_dataframe()
 
