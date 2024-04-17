@@ -44,8 +44,8 @@ def human_format(num):
 
 
 def get_secret(
-      secret_name
-      ,version='latest'
+      secret_name,
+      version='latest'
     ):
     '''
     retrieves a secret. works within bigquery python notebooks and needs
@@ -84,10 +84,10 @@ def get_secret(
 
 
 def bigquery_run_sql(
-        query_sql
-        ,service_account_secret='service_account_eng_general'
-        ,location='US'
-        ,project = 'western-verve-411004'
+        query_sql,
+        service_account_secret='service_account_eng_general',
+        location='US',
+        project = 'western-verve-411004'
     ):
     '''
     runs a query and returns results as a dataframe. the service account credentials to 
@@ -117,8 +117,8 @@ def bigquery_run_sql(
     return query_df
 
 
-
-def trigger_dune_query(
+### DUNE INTERACTIONS ###
+def dune_trigger_query(
         dune_api_key,
         query_id,
         query_parameters,
@@ -156,7 +156,7 @@ def trigger_dune_query(
         execution_id = response_data.get("execution_id")
         if verbose:
             print(f'Dune query triggered successfully, execution ID: {execution_id}')
-        
+
         return execution_id
     except requests.exceptions.RequestException as e:
         if verbose:
@@ -164,3 +164,68 @@ def trigger_dune_query(
         raise  # Optionally re-raise exception after logging
 
     return None
+
+
+def dune_check_query_status(
+        dune_api_key,
+        execution_id,
+        verbose=False
+    ):
+    '''
+    checks the status of a dune query. possible statuses include:
+    QUERY_STATE_QUEUED
+    QUERY_STATE_PENDING
+    QUERY_STATE_EXECUTING
+    QUERY_STATE_COMPLETED
+    QUERY_STATE_FAILED
+
+    param: dune_api_key <string> the dune API key
+    param: execution_id <int> the query execution ID
+    
+    return: query_status <string> the status of the query
+    '''
+    headers = {"X-DUNE-API-KEY": dune_api_key}
+    url = "https://api.dune.com/api/v1/execution/"+str(execution_id)+"/status"
+
+    response = requests.request("GET", url, headers=headers)
+    response_data = json.loads(response.text)
+
+    if 'error' in response_data:
+        query_status = 'QUERY_STATE_FAILED'
+
+    else:
+        # QUERY_STATE_COMPLETED
+        query_status = response_data["state"]
+
+    if verbose:
+        print(query_status)
+
+    return query_status
+
+
+def dune_get_query_results(
+        dune_api_key,
+        execution_id
+    ):
+    '''
+    retrieves the results from a dune query attempt
+
+    param: dune_api_key <string> the dune API key
+    param: execution_id <int> the query execution ID
+
+    return: api_status_code <int> the api response of the dune query
+    return: query_df <dataframe> the dataframe of results if valid
+    '''
+
+    # retreive the results
+    headers = {"X-DUNE-API-KEY": dune_api_key}
+    url = "https://api.dune.com/api/v1/execution/"+str(execution_id)+"/results/csv"
+    response = requests.request("GET", url, headers=headers)
+
+    if response.status_code == 200:
+        query_df = pd.read_csv(io.StringIO(response.text), index_col=0)
+        query_df = query_df.reset_index()
+    else:
+        query_df = None
+
+    return(response.status_code,query_df)
