@@ -115,3 +115,52 @@ def bigquery_run_sql(
     query_df = query_job.to_dataframe()
 
     return query_df
+
+
+
+def trigger_dune_query(
+        dune_api_key,
+        query_id,
+        query_parameters,
+        query_engine='medium',
+        verbose=False
+    ):
+    """
+    Runs a Dune query via API based on the input query ID and parameters.
+
+    Parameters:
+        dune_api_key (str): The Dune API key.
+        query_id (int): Dune's query ID (visible in the URLs).
+        query_parameters (dict): The query parameters to input to the Dune query.
+        query_engine (str): The Dune query engine type to use (options are 'medium' or 'large').
+        verbose (bool): If True, prints detailed debug information.
+
+    Returns:
+        int: The query execution ID or None if the query fails.
+
+    Raises:
+        RequestException: If an error occurs during the API request.
+    """
+    headers = {'X-DUNE-API-KEY': dune_api_key}
+    base_url = f'https://api.dune.com/api/v1/query/{query_id}/execute'
+    params = {
+        'query_parameters': query_parameters,
+        'performance': query_engine,
+    }
+
+    try:
+        response = requests.post(base_url, headers=headers, json=params)
+        response.raise_for_status()  # Raises an HTTPError for bad responses
+        response_data = response.json()
+
+        execution_id = response_data.get("execution_id")
+        if verbose:
+            print(f'Dune query triggered successfully, execution ID: {execution_id}')
+        
+        return execution_id
+    except requests.exceptions.RequestException as e:
+        if verbose:
+            print(f'Dune query trigger failed: {str(e)}')
+        raise  # Optionally re-raise exception after logging
+
+    return None
