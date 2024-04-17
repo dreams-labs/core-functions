@@ -149,7 +149,7 @@ def dune_trigger_query(
     }
 
     try:
-        response = requests.post(base_url, headers=headers, json=params)
+        response = requests.post(base_url, headers=headers, json=params, timeout=30)
         response.raise_for_status()  # Raises an HTTPError for bad responses
         response_data = response.json()
 
@@ -187,7 +187,7 @@ def dune_check_query_status(
     headers = {"X-DUNE-API-KEY": dune_api_key}
     url = "https://api.dune.com/api/v1/execution/"+str(execution_id)+"/status"
 
-    response = requests.request("GET", url, headers=headers)
+    response = requests.request("GET", url, headers=headers, timeout=30)
     response_data = json.loads(response.text)
 
     if 'error' in response_data:
@@ -220,7 +220,7 @@ def dune_get_query_results(
     # retreive the results
     headers = {"X-DUNE-API-KEY": dune_api_key}
     url = "https://api.dune.com/api/v1/execution/"+str(execution_id)+"/results/csv"
-    response = requests.request("GET", url, headers=headers)
+    response = requests.request("GET", url, headers=headers, timeout=30)
 
     if response.status_code == 200:
         query_df = pd.read_csv(io.StringIO(response.text), index_col=0)
