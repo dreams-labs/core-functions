@@ -5,7 +5,6 @@ import os
 import io
 import json
 import pdb
-from dotenv import load_dotenv
 import requests
 import pandas as pd
 import numpy as np
@@ -45,6 +44,7 @@ def human_format(num):
 
 def get_secret(
       secret_name,
+      service_account_path=None,
       version='latest'
     ):
     '''
@@ -53,6 +53,7 @@ def get_secret(
 
     param: secret_name <string> the name of the secret in secrets manager, 
         e.g. "apikey_coingecko_tentabs_free"
+    param: service_account_path <string> optional input to specify the service account location
     param: version <string> the version of the secret to be loaded (only valid for notebooks)
     return: secret_value <string> the value of the secret
     '''
@@ -60,9 +61,10 @@ def get_secret(
     secret_path=f'projects/{project_id}/secrets/{secret_name}/versions/{version}'
 
     try:
-        # load credentials from environmental variables
-        load_dotenv()
-        service_account_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+        if not service_account_path:
+            # if there is no path input, attempt to load credentials from environmental variables
+            load_dotenv()
+            service_account_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
 
         if service_account_path:
             # if path is found use it for credentials (works in vscode)
@@ -81,40 +83,6 @@ def get_secret(
         secret_value = os.environ.get(secret_name)
 
     return secret_value
-
-
-def bigquery_run_sql(
-        query_sql,
-        service_account_secret='service_account_eng_general',
-        location='US',
-        project = 'western-verve-411004'
-    ):
-    '''
-    runs a query and returns results as a dataframe. the service account credentials to 
-    grant access are autofilled to a general service account. there are likely security
-    optimizations that will need to be done in the future. 
-
-    param: query_sql <string> the query to run
-    param: service_account_secret <json> the name of the GCP secrets manager secret that \
-        contains the service account jeson data
-    param: location <string> the location of the bigquery project
-    param: project <string> the project ID of the bigquery project
-    return: query_df <dataframe> the query result
-    '''
-    # prepare credentials using a service account stored in GCP secrets manager
-    service_account_info = json.loads(get_secret(service_account_secret))
-    scopes=["https://www.googleapis.com/auth/cloud-platform"]
-    credentials = service_account.Credentials.from_service_account_info(
-        service_account_info
-        ,scopes=scopes
-    )
-
-    # create a bigquery client object and run the query
-    client = bigquery.Client(project=project,location=location,credentials=credentials)
-    query_job = client.query(query_sql)
-    query_df = query_job.to_dataframe()
-
-    return query_df
 
 
 ### DUNE INTERACTIONS ###
