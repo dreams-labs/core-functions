@@ -8,6 +8,8 @@ import pdb
 import requests
 import pandas as pd
 import numpy as np
+from dotenv import load_dotenv
+import google.auth
 from google.cloud import bigquery
 from google.cloud import storage
 from google.cloud import secretmanager_v1
@@ -43,46 +45,58 @@ def human_format(num):
 
 
 def get_secret(
-      secret_name,
-      service_account_path=None,
-      version='latest'
+        secret_name,
+        service_account_path=None,
+        project_id='954736581165',
+        version='latest'
     ):
     '''
-    retrieves a secret. works within bigquery python notebooks and needs
-    testing in cloud functions
+    Retrieves a secret from GCP Secrets Manager.
 
-    param: secret_name <string> the name of the secret in secrets manager, 
-        e.g. "apikey_coingecko_tentabs_free"
-    param: service_account_path <string> optional input to specify the service account location
-    param: version <string> the version of the secret to be loaded (only valid for notebooks)
-    return: secret_value <string> the value of the secret
+    Parameters:
+    secret_name (str): The name of the secret in Secrets Manager.
+    service_account_path (str, optional): Path to the service account JSON file.
+    version (str): The version of the secret to be loaded.
+
+    Returns:
+    str: The value of the secret.
     '''
-    project_id = '954736581165' # dreams labs project id (western-verve-411004)
-    secret_path=f'projects/{project_id}/secrets/{secret_name}/versions/{version}'
+    # Construct the resource name of the secret version.
+    secret_path = f'projects/{project_id}/secrets/{secret_name}/versions/{version}'
 
-    try:
-        if not service_account_path:
-            # if there is no path input, attempt to load credentials from environmental variables
-            load_dotenv()
-            service_account_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+    # Initialize the Google Secret Manager client
+    client = initialize_secret_manager_client(service_account_path)
 
-        if service_account_path:
-            # if path is found use it for credentials (works in vscode)
-            credentials = service_account.Credentials.from_service_account_file(service_account_path)
-            client = secretmanager_v1.SecretManagerServiceClient(credentials=credentials)
-        else:
-            # if path isn't found, use default env variables (works in bigquery notebooks)
-            client = secretmanager_v1.SecretManagerServiceClient()
+    # Request to access the secret version
+    request = secretmanager_v1.AccessSecretVersionRequest(name=secret_path)
+    response = client.access_secret_version(request=request)
+    return response.payload.data.decode('UTF-8')
 
-        # initiate client and request secret
-        request = secretmanager_v1.AccessSecretVersionRequest(name=secret_path)
-        response = client.access_secret_version(request=request)
-        secret_value = response.payload.data.decode('UTF-8')
-    except:
-        # syntax that works in GCF
-        secret_value = os.environ.get(secret_name)
 
-    return secret_value
+def initialize_secret_manager_client(service_account_path):
+    '''
+    Initialize the Secret Manager client with the appropriate credentials.
+
+    Parameters:
+    service_account_path (str): Path to the service account JSON file.
+
+    Returns:
+    SecretManagerServiceClient: A client for the Secret Manager Service.
+    '''
+    if service_account_path:
+        # Explicitly use the provided service account file for credentials
+        credentials = service_account.Credentials.from_service_account_file(service_account_path)
+    else:
+        # Attempt to use default credentials
+        credentials, _ = google.auth.default()
+
+    return secretmanager_v1.SecretManagerServiceClient(credentials=credentials)
+
+# Example usage
+if __name__ == "__main__":
+    load_dotenv()  # Load environment variables from .env file at the start of your application
+    secret = get_secret("apikey_coingecko_tentabs_free")
+    print(secret)
 
 
 ### DUNE INTERACTIONS ###
