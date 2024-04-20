@@ -20,28 +20,47 @@ def human_format(num):
     '''
     converts a number to a scaled human readable string (e.g 7437283-->7.4M)
 
+    logic:
+        1. handle 0s
+        2. for 0.XX inputs, include 2 significant figures (e.g. 0.00037, 0.40, 0.0000000011)
+        3. for larger numbers, reducing to 1 significant figure and add 'k', 'M', 'B', etc
+
     TODO: the num<1 code should technically round upwards when truncating the
     string, e.g. 0.0678 right now will display as 0.067 but should be 0.068
 
     param: num <numeric>: the number to be reformatted
     return: formatted_number <string>: the number formatted as a human-readable string
     '''
-    if num < 1:
-        # decimals are output with enough precision to show two non-0 numbers
-        num = np.format_float_positional(num, trim='-')
-        after_decimal = str(num[2:])
-        keep = 4+len(after_decimal) - len(after_decimal.lstrip('0'))
-        num = num[:keep]
-    else:
-        num = float('{:.3g}'.format(num))
-        magnitude = 0
-        while abs(num) >= 1000:
-            magnitude += 1
-            num /= 1000.0
-        # copy pasted from github and is very difficult to understand as written
-        num='{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['','k','m','B','T','QA','QI','SX','SP','O','N','D'][magnitude])
+    suffixes = ['', 'k', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'O', 'N', 'D']
+    
+    # 1. handle 0s
+    if number == 0:
+        return '0'
 
-    return num
+    # 2. handle decimal type inputs
+    if -1 < number < 1:
+        # decimals are output with enough precision to show two significant figures
+
+        # whether number is returned negative
+        if number < 0:
+            negative_prefix='-'
+        else:
+            negative_prefix=''
+
+        # determine how much of initial string to keep
+        number = np.format_float_positional(abs(number))        
+        after_decimal = str(number[2:])
+        keep = 4+len(after_decimal) - len(after_decimal.lstrip('0'))
+
+        return f'{negative_prefix}{str(number[:keep])}'
+
+    # 3. handle non-decimal type inputs
+    i = 0
+    while abs(number) >= 1000:
+        number /= 1000.0
+        i += 1
+
+    return f'{number:.1f}{suffixes[i]}'
 
 
 def get_secret(
