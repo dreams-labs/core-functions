@@ -16,7 +16,7 @@ from google.cloud import secretmanager_v1
 from google.oauth2 import service_account
 
 
-def human_format(num):
+def human_format(number):
     '''
     converts a number to a scaled human readable string (e.g 7437283-->7.4M)
 
