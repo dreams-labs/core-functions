@@ -80,42 +80,23 @@ def get_secret(
     Returns:
     str: The value of the secret.
     '''
+    
     # Construct the resource name of the secret version.
     secret_path = f'projects/{project_id}/secrets/{secret_name}/versions/{version}'
 
     # Initialize the Google Secret Manager client
-    client = initialize_secret_manager_client(service_account_path)
-
-    # Request to access the secret version
-    request = secretmanager_v1.AccessSecretVersionRequest(name=secret_path)
-    response = client.access_secret_version(request=request)
-    return response.payload.data.decode('UTF-8')
-
-
-def initialize_secret_manager_client(service_account_path):
-    '''
-    Initialize the Secret Manager client with the appropriate credentials.
-
-    Parameters:
-    service_account_path (str): Path to the service account JSON file.
-
-    Returns:
-    SecretManagerServiceClient: A client for the Secret Manager Service.
-    '''
     if service_account_path:
         # Explicitly use the provided service account file for credentials
         credentials = service_account.Credentials.from_service_account_file(service_account_path)
     else:
         # Attempt to use default credentials
         credentials, _ = google.auth.default()
+    client = secretmanager_v1.SecretManagerServiceClient(credentials=credentials)
 
-    return secretmanager_v1.SecretManagerServiceClient(credentials=credentials)
-
-# Example usage
-if __name__ == "__main__":
-    load_dotenv()  # Load environment variables from .env file at the start of your application
-    secret = get_secret("apikey_coingecko_tentabs_free")
-    print(secret)
+    # Request to access the secret version
+    request = secretmanager_v1.AccessSecretVersionRequest(name=secret_path)
+    response = client.access_secret_version(request=request)
+    return response.payload.data.decode('UTF-8')
 
 
 ### DUNE INTERACTIONS ###
