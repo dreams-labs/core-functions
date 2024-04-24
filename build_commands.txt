@@ -1,2 +1,16 @@
+UPDATES
+# Increment version in setup.py or pyproject.toml manually
+
+# Remove old distributions
+rm -rf dist/*
+
+# Build new distribution
+python3 -m build
+
+# Upload the new version to PyPI using twine
+python3 -m twine upload dist/*
+
+
+INITIAL
 python3 -m build
 python3 -m twine upload dist/*

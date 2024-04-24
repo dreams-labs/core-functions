@@ -3,6 +3,7 @@ MANIFEST.in
 README.md
 pyproject.toml
 src/dreams_core/BigQuery.py
+src/dreams_core/Dune.py
 src/dreams_core/__init__.py
 src/dreams_core/dreams_core.py
 src/dreams_core.egg-info/PKG-INFO
