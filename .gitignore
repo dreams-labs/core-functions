@@ -6,7 +6,4 @@ __pycache__/
 .env
 
 # other local files
-dev/
 .DS_Store
-testfile.py
-scratch.py

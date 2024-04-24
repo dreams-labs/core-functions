@@ -49,7 +49,11 @@ class BigQuery:
         )
 
         # create a bigquery client object and run the query
-        client = bigquery.Client(project=self.project_id, location=self.location, credentials=credentials)
+        client = bigquery.Client(
+            project=self.project_id,
+            location=self.location,
+            credentials=credentials
+        )
         query_job = client.query(query_sql)
         query_df = query_job.to_dataframe()
 
@@ -74,7 +78,9 @@ class BigQuery:
         return query_df <dataframe> the cached or fresh result of the query
         '''
 
-        credentials = service_account.Credentials.from_service_account_info(self.service_account_json)
+        credentials = service_account.Credentials.from_service_account_info(
+            self.service_account_json
+        )
 
         filepath = f'cache/query_{cache_file_name}.csv'
         client = storage.Client(project=self.project_name, credentials=credentials)
@@ -89,9 +95,13 @@ class BigQuery:
             file_freshness = None
 
         # Determine cache staleness
-        cache_stale = file_freshness is None or \
-                    (datetime.datetime.now(tz=datetime.timezone.utc) - file_freshness).total_seconds() / 3600 > freshness
-
+        cache_stale = (
+            file_freshness is None or
+            (
+                (datetime.datetime.now(tz=datetime.timezone.utc) - file_freshness)
+                .total_seconds() / 3600 > freshness
+            )
+        )
         # Refresh cache if stale
         if cache_stale:
             query_df = self.run_sql(query_sql)

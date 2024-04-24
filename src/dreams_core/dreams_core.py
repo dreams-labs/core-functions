@@ -4,14 +4,10 @@ import math
 import os
 import io
 import json
-import pdb
 import requests
 import pandas as pd
 import numpy as np
-from dotenv import load_dotenv
 import google.auth
-from google.cloud import bigquery
-from google.cloud import storage
 from google.cloud import secretmanager_v1
 from google.oauth2 import service_account
 
@@ -32,7 +28,7 @@ def human_format(number):
     return: formatted_number <string>: the number formatted as a human-readable string
     '''
     suffixes = ['', 'k', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'O', 'N', 'D']
-    
+
     # 1. handle 0s
     if number == 0:
         return '0'
@@ -48,7 +44,7 @@ def human_format(number):
             negative_prefix=''
 
         # determine how much of initial string to keep
-        number = np.format_float_positional(abs(number))        
+        number = np.format_float_positional(abs(number))
         after_decimal = str(number[2:])
         keep = 4+len(after_decimal) - len(after_decimal.lstrip('0'))
 
@@ -80,7 +76,7 @@ def get_secret(
     Returns:
     str: The value of the secret.
     '''
-    
+
     # Construct the resource name of the secret version.
     secret_path = f'projects/{project_id}/secrets/{secret_name}/versions/{version}'
 
