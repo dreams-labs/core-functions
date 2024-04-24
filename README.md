@@ -1,5 +1,6 @@
-# Example Package
+# Dreams Labs Core Python Functions
 
-This is a simple example package. You can use
-[GitHub-flavored Markdown](https://guides.github.com/features/mastering-markdown/)
-to write your content.
+these are split into multile subfiles based on use case:
+* dreams_core includes standard functions that should be useful across many use cases, such as help with formatting and importing secrets
+* BigQuery is functions related to bigquery
+* Dune includes functions related to dune

@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: dreams_core
-Version: 0.0.1
+Version: 0.0.2
 Summary: brought to you by the dreamslabs discord community
 Author-email: tentabs <tentabs00@gmail.com>
 Project-URL: Community, https://discord.gg/dreamcrypto
@@ -21,8 +21,9 @@ Requires-Dist: google-cloud-secret-manager>=2.3.0
 Requires-Dist: google-cloud-bigquery>=2.13.1
 Requires-Dist: google-cloud-storage>=1.37.1
 
-# Example Package
+# Dreams Labs Core Python Functions
 
-This is a simple example package. You can use
-[GitHub-flavored Markdown](https://guides.github.com/features/mastering-markdown/)
-to write your content.
+these are split into multile subfiles based on use case:
+* dreams_core includes standard functions that should be useful across many use cases, such as help with formatting and importing secrets
+* BigQuery is functions related to bigquery
+* Dune includes functions related to dune
