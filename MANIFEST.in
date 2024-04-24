@@ -1,0 +1,5 @@
+# Exclude specific files and directories
+global-exclude *.pyc
+global-exclude .gitignore
+global-exclude requirements.txt
+global-exclude .DS_Store

@@ -11,12 +11,6 @@ authors = [
 description = "brought to you by the dreamslabs discord community"
 readme = "README.md"
 requires-python = ">=3.11"
-exclude = [
-  "**/*.pyc",
-  ".gitignore",
-  "requirements.txt",
-  ".DS_Store"
-]
 dependencies = [
   "requests>=2.25.1",
   "pandas>=1.2.0",
@@ -26,16 +20,13 @@ dependencies = [
   "google-cloud-bigquery>=2.13.1",
   "google-cloud-storage>=1.37.1"
 ]
-
-[project.urls]
-Community = "https://discord.gg/dreamcrypto"
-Github = "https://github.com/dreams-labs/core-functions"
-
-# Classifiers to help categorize the project
 classifiers = [
     "Programming Language :: Python :: 3.11",
     "Development Status :: 3 - Alpha",
-    "Intended Audience :: Dreams Crypto Community Devs",
+    "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
+[project.urls]
+Community = "https://discord.gg/dreamcrypto"
+Github = "https://github.com/dreams-labs/core-functions"
