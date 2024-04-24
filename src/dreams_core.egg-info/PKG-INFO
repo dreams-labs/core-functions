@@ -1,0 +1,28 @@
+Metadata-Version: 2.1
+Name: dreams_core
+Version: 0.0.1
+Summary: brought to you by the dreamslabs discord community
+Author-email: tentabs <tentabs00@gmail.com>
+Project-URL: Community, https://discord.gg/dreamcrypto
+Project-URL: Github, https://github.com/dreams-labs/core-functions
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: requests>=2.25.1
+Requires-Dist: pandas>=1.2.0
+Requires-Dist: numpy>=1.19.5
+Requires-Dist: google-auth>=1.24.0
+Requires-Dist: google-cloud-secret-manager>=2.3.0
+Requires-Dist: google-cloud-bigquery>=2.13.1
+Requires-Dist: google-cloud-storage>=1.37.1
+
+# Example Package
+
+This is a simple example package. You can use
+[GitHub-flavored Markdown](https://guides.github.com/features/mastering-markdown/)
+to write your content.
