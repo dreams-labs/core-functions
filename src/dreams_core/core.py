@@ -118,7 +118,6 @@ def translate_chain(
         from reference.chain_nicknames cn
         left join core.chains ch on ch.chain_id = cn.chain_id
         '''
-    bq = BigQuery()
     chain_nicknames_df = BigQuery().cache_sql(query_sql,'chain_nicknames')
 
     # set everything to be lower case
