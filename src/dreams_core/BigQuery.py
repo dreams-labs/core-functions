@@ -1,4 +1,11 @@
+'''
+common functions for interacting with BigQuery within the dreams labs data ecosystem. all
+functions are initiated through the BigQuery() class which contains credentials, project ids, and
+other relevant metadata. 
+'''
+
 import datetime
+import os
 import pandas as pd
 from google.cloud import bigquery
 from google.oauth2 import service_account
@@ -9,14 +16,27 @@ class BigQuery:
     A class to interact with BigQuery. This class is designed
     to be used in the context of the Dreams project. It is not
     intended to be a general purpose BigQuery class.
+
+    Params: 
+        service_account_json (str): Path to the service account JSON file. if no value is input then
+        the functions will default to using the path in the env var GOOGLE_APPLICATION_CREDENTIALS
     '''
 
     def __init__(
             self,
-            service_account_json,
+            service_account_json_path=None,
             verbose=False
         ):
-        self.service_account_json = service_account_json
+        # load credentials using service account and scope
+        if service_account_json_path is None:
+            service_account_json_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+        scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+        self.credentials = service_account.Credentials.from_service_account_file(
+            service_account_json_path
+            ,scopes=scopes
+        )
+
+        # other variables
         self.verbose = verbose
         self.location = 'US'
         self.project_id = 'western-verve-411004'
@@ -34,25 +54,18 @@ class BigQuery:
         optimizations that will need to be done in the future. 
 
         param: query_sql <string> the query to run
-        param: service_account_json_secret <json> the name of the GCP secrets manager secret that \
-            contains the service account jeson data
         param: location <string> the location of the bigquery project
         param: project <string> the project ID of the bigquery project
         return: query_df <dataframe> the query result
         '''
         # prepare credentials using a service account stored in GCP secrets manager
 
-        scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-        credentials = service_account.Credentials.from_service_account_info(
-            self.service_account_json
-            ,scopes=scopes
-        )
 
         # create a bigquery client object and run the query
         client = bigquery.Client(
             project=self.project_id,
             location=self.location,
-            credentials=credentials
+            credentials=self.credentials
         )
         query_job = client.query(query_sql)
         query_df = query_job.to_dataframe()
@@ -78,12 +91,8 @@ class BigQuery:
         return query_df <dataframe> the cached or fresh result of the query
         '''
 
-        credentials = service_account.Credentials.from_service_account_info(
-            self.service_account_json
-        )
-
         filepath = f'cache/query_{cache_file_name}.csv'
-        client = storage.Client(project=self.project_name, credentials=credentials)
+        client = storage.Client(project=self.project_name, credentials=self.credentials)
         bucket = client.get_bucket(self.bucket_name)
 
         # Attempt to retrieve file freshness

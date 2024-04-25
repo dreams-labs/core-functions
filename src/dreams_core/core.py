@@ -1,7 +1,14 @@
+'''
+this module includes core functions for the dreams labs data ecosystem. functions included here 
+are designed to be broadly applicable and resuable across many projects. functions speciifc to 
+individual tools such as dune/bigquery/etc are available in other modules within this directory. 
+'''
+
 import numpy as np
 import google.auth
 from google.cloud import secretmanager_v1
 from google.oauth2 import service_account
+from .bigquery import BigQuery
 
 
 def human_format(number):
@@ -85,3 +92,63 @@ def get_secret(
     request = secretmanager_v1.AccessSecretVersionRequest(name=secret_path)
     response = client.access_secret_version(request=request)
     return response.payload.data.decode('UTF-8')
+
+
+def translate_chain(
+        input_chain
+        ,verbose=False
+    ):
+    '''
+    Attempts to match a blockchain alias and returns a dictionary with all
+    corresponding aliases.
+
+    Args:
+        input_chain (str): The chain name input by the user.
+        verbose (bool): Whether to print debugging information.
+
+    Returns:
+        dict: A dictionary with all available chain aliases.
+    '''
+
+    # retreive chain ids for all aliases
+    query_sql = '''
+        select cn.chain_id
+        ,cn.chain_reference
+        ,ch.*
+        from reference.chain_nicknames cn
+        left join core.chains ch on ch.chain_id = cn.chain_id
+        '''
+    bq = BigQuery()
+    chain_nicknames_df = BigQuery().cache_sql(query_sql,'chain_nicknames')
+
+    # set everything to be lower case
+    chain_nicknames_df['chain_reference'] = chain_nicknames_df['chain_reference'].str.lower()
+    input_chain = input_chain.lower()
+
+
+    # filter the df of all aliases for the input chain
+    input_chain_nicknames_df = chain_nicknames_df[chain_nicknames_df['chain_reference'] == input_chain]
+
+    # if the input chain alias couldn't be found, return empty dict
+    if input_chain_nicknames_df.empty:
+        if verbose:
+            print(f'input value "{input_chain}" could not be matched to any known chain alias')
+        return {}
+
+    # if the input chain alias could be found, store its id and name in a dictionary
+    chain_dict = {
+        'chain_id': input_chain_nicknames_df['chain_id'].iloc[0],
+        'chain_name': input_chain_nicknames_df['chain'].iloc[0]
+    }
+
+    # add all additional chain aliases to the dictionary
+    chain_text_columns = chain_nicknames_df.filter(regex='chain_text_').columns
+    for column in chain_text_columns:
+        nickname = input_chain_nicknames_df[column].iloc[0]
+        if nickname:
+            chain_dict[column.replace('chain_text_', '')] = nickname
+
+    if verbose:
+        print(f'retrieved chain nicknames for {str(chain_dict.keys())}')
+
+    return chain_dict
