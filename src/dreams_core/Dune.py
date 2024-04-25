@@ -1,10 +1,19 @@
+'''
+dreams labs functions that related to dune api interactions. 
+
+IMPORTANT: much of this code can be done more simply with the dune python sdk (see
+https://docs.dune.com/api-reference/overview/sdks for more information). for the standard process
+of running sql and retrieving results in a dataframe, it is recommended to use the dune sdk 
+function dune.run_query_dataframe() rather than multiple functions within this package. 
+'''
+
 import io
 import json
 import requests
 import pandas as pd
 
 
-def dune_trigger_query(
+def trigger_query(
         dune_api_key,
         query_id,
         query_parameters,
@@ -52,7 +61,7 @@ def dune_trigger_query(
     return None
 
 
-def dune_check_query_status(
+def check_query_status(
         dune_api_key,
         execution_id,
         verbose=False
@@ -89,7 +98,7 @@ def dune_check_query_status(
     return query_status
 
 
-def dune_get_query_results(
+def get_query_results(
         dune_api_key,
         execution_id
     ):
