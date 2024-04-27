@@ -8,7 +8,7 @@ import numpy as np
 import google.auth
 from google.cloud import secretmanager_v1
 from google.oauth2 import service_account
-from .bigquery import BigQuery
+from .googlecloud import GoogleCloud as dgc
 
 
 def human_format(number):
@@ -118,7 +118,7 @@ def translate_chain(
         from reference.chain_nicknames cn
         left join core.chains ch on ch.chain_id = cn.chain_id
         '''
-    chain_nicknames_df = BigQuery().cache_sql(query_sql,'chain_nicknames')
+    chain_nicknames_df = dgc().cache_sql(query_sql,'chain_nicknames')
 
     # set everything to be lower case
     chain_nicknames_df['chain_reference'] = chain_nicknames_df['chain_reference'].str.lower()

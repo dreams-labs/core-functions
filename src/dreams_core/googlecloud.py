@@ -11,7 +11,7 @@ from google.cloud import bigquery
 from google.oauth2 import service_account
 from google.cloud import storage
 
-class BigQuery:
+class GoogleCloud:
     ''' 
     A class to interact with BigQuery. This class is designed
     to be used in the context of the Dreams project. It is not
