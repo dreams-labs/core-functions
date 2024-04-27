@@ -1,10 +1,13 @@
 # Byte-compiled / optimized files
 __pycache__/
 *.py[cod]
+*$py.class
 
-# environments
-.env
+# Distribution / packaging
+dist/
+*.egg-info/
 
 # other local files
 .DS_Store
 build_commands.txt
+.env
