@@ -7,6 +7,7 @@ other relevant metadata.
 import datetime
 import os
 import pandas as pd
+import google.auth
 from google.cloud import bigquery
 from google.oauth2 import service_account
 from google.cloud import storage
@@ -31,10 +32,13 @@ class GoogleCloud:
         if service_account_json_path is None:
             service_account_json_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
         scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-        self.credentials = service_account.Credentials.from_service_account_file(
-            service_account_json_path
-            ,scopes=scopes
-        )
+        try:
+            self.credentials = service_account.Credentials.from_service_account_file(
+                service_account_json_path
+                ,scopes=scopes
+            )
+        except: 
+            self.credentials, _ = google.auth.default()
 
         # other variables
         self.verbose = verbose
