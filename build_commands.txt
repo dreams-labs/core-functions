@@ -1,5 +1,5 @@
 UPDATES
-1. Increment version in pyproject.toml and MANIFEST.in manually
+1. Increment version in pyproject.toml
 
 2. Remove old distributions
 rm -rf dist/*
