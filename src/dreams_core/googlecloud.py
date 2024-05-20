@@ -6,6 +6,8 @@ other relevant metadata.
 
 import datetime
 import os
+import logging
+import json
 import pandas as pd
 import google.auth
 from google.cloud import bigquery
@@ -19,14 +21,13 @@ class GoogleCloud:
     intended to be a general purpose BigQuery class.
 
     Params: 
-        service_account_json (str): Path to the service account JSON file. if no value is input then
+        service_account_json (str): Path to the service account JSON file. if no value is input \
         the functions will default to using the path in the env var GOOGLE_APPLICATION_CREDENTIALS
     '''
 
     def __init__(
             self,
-            service_account_json_path=None,
-            verbose=False
+            service_account_json_path=None
         ):
         # load credentials using service account and scope
         if service_account_json_path is None:
@@ -37,15 +38,18 @@ class GoogleCloud:
                 service_account_json_path
                 ,scopes=scopes
             )
-        except: 
+        except Exception as e: 
             self.credentials, _ = google.auth.default()
 
         # other variables
-        self.verbose = verbose
         self.location = 'US'
         self.project_id = 'western-verve-411004'
         self.project_name = 'dreams-labs-data'
         self.bucket_name = 'dreams-labs-storage'
+
+        # configure logger
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(logging.NullHandler())
 
 
     def run_sql(
@@ -73,6 +77,8 @@ class GoogleCloud:
         )
         query_job = client.query(query_sql)
         query_df = query_job.to_dataframe()
+
+        self.logger.info('BigQuery query completed.')
 
         return query_df
 
@@ -120,11 +126,79 @@ class GoogleCloud:
             query_df = self.run_sql(query_sql)
             blob = bucket.blob(filepath)
             blob.upload_from_string(query_df.to_csv(index=False), content_type='text/csv')
-            if self.verbose:
-                print('returned fresh csv and refreshed cache')
+
+            self.logger.info('returned fresh csv and refreshed cache')
         else:
             query_df = pd.read_csv(f'gs://{self.bucket_name}/{filepath}')
-            if self.verbose:
-                print('returned cached csv')
+
+            self.logger.info('returned cached csv')
 
         return query_df
+
+
+    def gcs_upload_file(
+            self,
+            data,
+            gcs_folder,
+            filename,
+            project_name='dreams-labs-data',
+            bucket_name='dreams-labs-storage',
+        ):
+        '''
+        uploads a file to google cloud storage. currently accepted input formats are \
+        dataframes or dicts. 
+
+        Params:
+            data: <dict> or <dataframe> the data to upload
+            gcs_folder: <string> the upload folder in gcs, e.g. 'data_lake/coingecko_market_data'
+            filename: <string> the name the gcs file will be given, e.g. 'aioz-network.json'
+            project_name: <string> google cloud project name
+            bucket_name: <string> GCS bucket name
+        '''
+
+        # adjust filename to append filetype if one isn't included
+        if '.' in filename:
+            pass
+        elif isinstance(data, pd.DataFrame):
+            filename = f'{filename}.csv'
+        elif isinstance(data, dict):
+            filename = f'{filename}.json'
+        else:
+            raise ValueError('Input data must be a dict or dataframe.')
+
+        full_path = f'{gcs_folder}/{filename}'
+
+
+        try:
+            # get the client and bucket
+            client = storage.Client(project=project_name)
+            bucket = client.get_bucket(bucket_name)
+            blob = bucket.blob(full_path)
+
+            # if the file is a dataframe, store it as a csv
+            if isinstance(data, pd.DataFrame):
+                # make temp folder and store the csv there
+                temp_folder = 'temp'
+                os.makedirs(temp_folder, exist_ok=True)
+                local_file_path = f'{temp_folder}/{filename}'
+                data.to_csv(local_file_path, index=False)
+
+                # upload the csv to gcs
+                with open(local_file_path, 'rb') as file:
+                    blob.upload_from_file(file)
+
+                # remove the temporary CSV file and folder
+                os.remove(local_file_path)
+                os.rmdir(temp_folder)
+
+                self.logger.info('Successfully uploaded %s', f'{bucket_name}/{full_path}')
+
+            # if the file is a dict, store it as a json blob
+            elif isinstance(data, dict):
+                blob.upload_from_string(json.dumps(data),content_type='json')
+
+                self.logger.info('Successfully uploaded %s', f'{bucket_name}/{full_path}')
+
+        except Exception as e:
+            self.logger.error(f'Failed to upload {filename} to {bucket_name}/{gcs_folder}: {e}')
+            raise
