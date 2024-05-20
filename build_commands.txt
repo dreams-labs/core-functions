@@ -13,6 +13,11 @@ python3 -m twine upload dist/*
 5. Update local package
 pip install --upgrade dreams_core
 
+UPDATES COMBINED
+rm -rf dist/*
+python3 -m build
+python3 -m twine upload dist/*
+pip install --upgrade dreams_core
 
 INITIAL
 python3 -m build
