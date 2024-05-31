@@ -3,13 +3,32 @@ this module includes core functions for the dreams labs data ecosystem. function
 are designed to be broadly applicable and resuable across many projects. functions speciifc to 
 individual tools such as dune/bigquery/etc are available in other modules within this directory. 
 '''
+# pylint: disable=C0301
 
+import logging
 import numpy as np
 import google.auth
 from google.cloud import secretmanager_v1
 from google.oauth2 import service_account
 from .googlecloud import GoogleCloud as dgc
 
+
+def configure_logger():
+    '''
+    Retrieves an existing logger if one exists, otherwise creates a new silent logger object. \
+        This can be used at the start of any function that uses logging to avoid repeated \
+        logger configurations.
+
+    returns:
+    - logger (logging object): a logger object that either retains existing logging settings or \
+        creates a new silent logger
+    '''
+    logger = logging.getLogger(__name__)
+    if not logger.handlers:
+        handler = logging.NullHandler()
+        logger.addHandler(handler)
+
+    return logger
 
 def human_format(number):
     '''
