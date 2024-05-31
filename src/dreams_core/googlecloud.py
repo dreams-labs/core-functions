@@ -3,16 +3,19 @@ common functions for interacting with BigQuery within the dreams labs data ecosy
 functions are initiated through the BigQuery() class which contains credentials, project ids, and
 other relevant metadata. 
 '''
+# pylint: disable=C0301
 
 import datetime
 import os
 import logging
 import json
+from pytz import utc
 import pandas as pd
 import google.auth
 from google.cloud import bigquery
 from google.oauth2 import service_account
 from google.cloud import storage
+import pandas_gbq
 
 class GoogleCloud:
     ''' 
@@ -141,7 +144,6 @@ class GoogleCloud:
             data,
             gcs_folder,
             filename,
-            project_name='dreams-labs-data',
             bucket_name='dreams-labs-storage',
         ):
         '''
@@ -171,7 +173,7 @@ class GoogleCloud:
 
         try:
             # get the client and bucket
-            client = storage.Client(project=project_name)
+            client = storage.Client(project=self.project_name)
             bucket = client.get_bucket(bucket_name)
             blob = bucket.blob(full_path)
 
@@ -200,5 +202,99 @@ class GoogleCloud:
                 self.logger.info('Successfully uploaded %s', f'{bucket_name}/{full_path}')
 
         except Exception as e:
-            self.logger.error(f'Failed to upload {filename} to {bucket_name}/{gcs_folder}: {e}')
+            self.logger.error('Failed to upload %s to %s/%s: %s', filename, bucket_name, gcs_folder, e)
             raise
+
+
+    def get_table_schema(
+            self, 
+            dataset_id,
+            table_id
+        ):
+        """
+        Retrieves the schema of a specified BigQuery table.
+
+        Args:
+            project_id (str): The GCP project ID where the BigQuery table is located.
+            dataset_id (str): The dataset ID in BigQuery where the table is located.
+            table_id (str): The table ID in BigQuery for which the schema is to be retrieved.
+
+        Returns:
+            schema (list of dicts): A list of dictionaries where each dictionary represents a column \
+                in the table schema. Each dictionary contains the column 'name' and its 'type'.
+        """
+        client = bigquery.Client(project=self.project_id)
+        table_ref = client.dataset(dataset_id).table(table_id)
+        table = client.get_table(table_ref)
+
+        schema = [{'name': field.name, 'type': field.field_type.lower()} for field in table.schema]
+
+        return schema
+
+
+    def upload_df_to_bigquery(
+            self,
+            upload_df,
+            dataset_id,
+            table_id,
+            if_exists='append'
+        ):
+        '''
+        Appends the provided DataFrame to the specified BigQuery table. 
+
+        Steps:
+            1. Retrieve the schema from BigQuery
+            2. Explicitly map datatypes onto new dataframe upload_df
+            3. Upload using pandas_gbq
+
+        Params:
+            upload_df (pandas.DataFrame): The DataFrame to upload
+            dataset_id (str): BigQuery dataset ID
+            table_id (str): BigQuery table ID
+            project_id (str): GCP project ID
+        Returns:
+            None
+        '''
+
+        logger = logging.getLogger(__name__)
+
+        # 1. Retrieve schema from BigQuery
+        # --------------------------------
+        schema = self.get_table_schema(dataset_id,table_id)
+
+        # 2. Format and map datatypes
+        # -----------------------------
+
+        # add updated_at column
+        upload_df['updated_at'] = datetime.datetime.now(utc)
+
+        # Localize datetime columns if they are not already timezone-aware
+        for col in upload_df.select_dtypes(include=['datetime64']).columns:
+            if upload_df[col].dt.tz is None:
+                upload_df[col] = pd.to_datetime(upload_df[col]).dt.tz_localize(utc).astype('datetime64[us, UTC]')
+            else:
+                upload_df[col] = upload_df[col].astype('datetime64[us, UTC]')
+
+        # Set df datatypes based on schema
+        dtype_mapping = {field['name']: field['type'] for field in schema}
+        dtype_mapping = {
+            key: (str if value == 'string' else
+                    int if value == 'integer' else
+                    float if value == 'float64' else
+                    'datetime64[us, UTC]' if value == 'datetime' else value)
+            for key, value in dtype_mapping.items()
+        }
+        upload_df = upload_df.astype(dtype_mapping)
+        logger.info('Prepared upload df with %s rows.', len(upload_df))
+
+        # 3. Upload df to BigQuery
+        # ------------------------
+        table_name = f'{dataset_id}.{table_id}'
+        pandas_gbq.to_gbq(
+            upload_df,
+            table_name,
+            project_id=self.project_id,
+            if_exists=if_exists,
+            progress_bar=False
+        )
+        logger.info('Appended upload df to %s.', table_name)
