@@ -49,7 +49,7 @@ def human_format(number):
 
     # 1. handle 0s
     if number == 0:
-        return '0'
+        return '0.0'
 
     # 2. handle decimal type inputs
     if -1 < number < 1:
