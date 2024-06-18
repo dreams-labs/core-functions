@@ -35,7 +35,11 @@ class GoogleCloud:
         # load credentials using service account and scope
         if service_account_json_path is None:
             service_account_json_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
-        scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+        scopes=[
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/drive",
+            "https://www.googleapis.com/auth/bigquery",
+        ]
         try:
             self.credentials = service_account.Credentials.from_service_account_file(
                 service_account_json_path
