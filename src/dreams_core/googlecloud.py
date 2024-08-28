@@ -11,8 +11,10 @@ import logging
 import json
 from pytz import utc
 import pandas as pd
+import aiohttp
 import google.auth
 from google.cloud import bigquery
+from google.auth.transport.requests import AuthorizedSession
 from google.oauth2 import service_account
 from google.cloud import storage
 import pandas_gbq
@@ -302,3 +304,35 @@ class GoogleCloud:
             progress_bar=False
         )
         logger.info('Appended upload df to %s.', table_name)
+
+
+    async def trigger_cloud_function(url):
+        """
+        Trigger a function via an authenticated request.
+
+        Args:
+            url (str): The url of the cloud function to which the request is sent.
+
+        Description:
+            1. Obtain credentials using service account file specified in the 
+            'GOOGLE_APPLICATION_CREDENTIALS' environment variable.
+            2. Create an authenticated session using the obtained credentials.
+            3. Make an authenticated GET request to the provided URL.
+            4. Use aiohttp to make another authenticated GET request and log the 
+            response status and content.
+        """
+        logger = logging.getLogger(__name__)
+        
+        # Obtain credentials
+        creds = service_account.IDTokenCredentials.from_service_account_file(
+            os.getenv('GOOGLE_APPLICATION_CREDENTIALS'), target_audience=url)
+        
+        # Create an authenticated session
+        authed_session = AuthorizedSession(creds)
+        
+        # Make an authenticated request
+        resp = authed_session.get(url)
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers={'Authorization': f'Bearer {creds.token}'}):
+                logger.info('%s: %s' % (resp.status_code, resp.text))
