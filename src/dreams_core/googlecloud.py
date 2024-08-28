@@ -306,7 +306,7 @@ class GoogleCloud:
         logger.info('Appended upload df to %s.', table_name)
 
 
-    async def trigger_cloud_function(url):
+    async def trigger_cloud_function(self, url):
         """
         Trigger a function via an authenticated request.
 
@@ -321,8 +321,6 @@ class GoogleCloud:
             4. Use aiohttp to make another authenticated GET request and log the 
             response status and content.
         """
-        logger = logging.getLogger(__name__)
-        
         # Obtain credentials
         creds = service_account.IDTokenCredentials.from_service_account_file(
             os.getenv('GOOGLE_APPLICATION_CREDENTIALS'), target_audience=url)
@@ -335,4 +333,4 @@ class GoogleCloud:
         
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers={'Authorization': f'Bearer {creds.token}'}):
-                logger.info('%s: %s' % (resp.status_code, resp.text))
+                self.logger.info('%s: %s' % (resp.status_code, resp.text))
