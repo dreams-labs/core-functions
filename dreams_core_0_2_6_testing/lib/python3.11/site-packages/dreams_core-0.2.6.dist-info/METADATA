@@ -1,0 +1,50 @@
+Metadata-Version: 2.1
+Name: dreams_core
+Version: 0.2.6
+Summary: brought to you by the dreamslabs discord community
+Author-email: tentabs <tentabs00@gmail.com>
+Project-URL: Community, https://discord.gg/dreamcrypto
+Project-URL: Github, https://github.com/dreams-labs/core-functions
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: requests>=2.25.1
+Requires-Dist: pandas>=1.2.0
+Requires-Dist: numpy>=1.19.5
+Requires-Dist: google-auth>=1.24.0
+Requires-Dist: google-cloud-secret-manager>=2.3.0
+Requires-Dist: google-cloud-bigquery>=2.13.1
+Requires-Dist: google-cloud-storage>=1.37.1
+
+# Dreams Labs Core Python Functions
+
+these are split into multile subfiles based on use case:
+* dreams_core includes standard functions that should be useful across many use cases, such as help with formatting and importing secrets
+* BigQuery is functions related to bigquery
+* Dune includes functions related to dune
+
+### Testing
+
+After having installed the requirements, you can run the tests with the following command:
+
+```bash
+pytest
+```
+If you want to add test coverage, you can run the following command:
+
+```bash
+pytest --cov --cov-config=.coveragerc
+```
+
+To view the coverage report in web browser, you can run the following command:
+
+```bash
+pytest --cov --cov-report html --cov-config=.coveragerc
+```
+
+Then you can see the coverage report by opening the file `htmlcov/index.html` in your browser.
