@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: dreams_core
-Version: 0.2.5
+Version: 0.2.9
 Summary: brought to you by the dreamslabs discord community
 Author-email: tentabs <tentabs00@gmail.com>
 Project-URL: Community, https://discord.gg/dreamcrypto
@@ -14,12 +14,16 @@ Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: requests>=2.25.1
-Requires-Dist: pandas>=1.2.0
+Requires-Dist: pandas>=1.5.3
 Requires-Dist: numpy>=1.19.5
-Requires-Dist: google-auth>=1.24.0
+Requires-Dist: aiohttp>=3.8.5
+Requires-Dist: google-auth>=2.22.0
+Requires-Dist: google-cloud-bigquery>=3.11.4
+Requires-Dist: google-cloud-storage>=2.10.0
+Requires-Dist: google-auth-httplib2>=0.1.0
+Requires-Dist: google-auth-oauthlib>=1.0.0
+Requires-Dist: pandas-gbq>=0.19.0
 Requires-Dist: google-cloud-secret-manager>=2.3.0
-Requires-Dist: google-cloud-bigquery>=2.13.1
-Requires-Dist: google-cloud-storage>=1.37.1
 
 # Dreams Labs Core Python Functions
 

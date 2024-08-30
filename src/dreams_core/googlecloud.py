@@ -18,6 +18,7 @@ from google.auth.transport.requests import AuthorizedSession
 from google.oauth2 import service_account
 from google.cloud import storage
 import pandas_gbq
+from google.auth.transport.requests import Request
 
 class GoogleCloud:
     ''' 
@@ -306,9 +307,9 @@ class GoogleCloud:
         logger.info('Appended upload df to %s.', table_name)
 
 
-    async def trigger_cloud_function(self, url):
+    def trigger_cloud_function(self, url):
         """
-        Trigger a function via an authenticated request.
+        Synchronously trigger a function via an authenticated request.
 
         Args:
             url (str): The url of the cloud function to which the request is sent.
@@ -318,8 +319,7 @@ class GoogleCloud:
             'GOOGLE_APPLICATION_CREDENTIALS' environment variable.
             2. Create an authenticated session using the obtained credentials.
             3. Make an authenticated GET request to the provided URL.
-            4. Use aiohttp to make another authenticated GET request and log the 
-            response status and content.
+            4. Log the response status and content.
         """
         # Obtain credentials
         creds = service_account.IDTokenCredentials.from_service_account_file(
@@ -331,6 +331,33 @@ class GoogleCloud:
         # Make an authenticated request
         resp = authed_session.get(url)
         
+        # Log the response
+        self.logger.info('%s: %s' % (resp.status_code, resp.text))
+
+
+    async def trigger_cloud_function_async(self, url):
+        """
+        Asynchronously trigger a function via an authenticated request.
+
+        Args:
+            url (str): The url of the cloud function to which the request is sent.
+
+        Description:
+            1. Obtain credentials using service account file specified in the 
+            'GOOGLE_APPLICATION_CREDENTIALS' environment variable.
+            2. Create an authenticated session using the obtained credentials.
+            3. Make an authenticated GET request to the provided URL.
+            4. Log the response status and content.
+        """
+        # Obtain credentials
+        creds = service_account.IDTokenCredentials.from_service_account_file(
+            os.getenv('GOOGLE_APPLICATION_CREDENTIALS'), target_audience=url)
+        
+        # refresh credentials to fix occassional 401 errors
+        creds.refresh(Request())
+
+        # Create an authenticated session
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers={'Authorization': f'Bearer {creds.token}'}):
-                self.logger.info('%s: %s' % (resp.status_code, resp.text))
+            async with session.get(url, headers={"Authorization": f"Bearer {creds.token}"} ) as resp:
+                # Log the response
+                self.logger.info('%s: %s' % (resp.status, await resp.text()))
