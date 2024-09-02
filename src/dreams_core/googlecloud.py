@@ -12,13 +12,15 @@ import json
 from pytz import utc
 import pandas as pd
 import aiohttp
-import google.auth
-from google.cloud import bigquery
-from google.auth.transport.requests import AuthorizedSession
-from google.oauth2 import service_account
-from google.cloud import storage
 import pandas_gbq
+import google.auth
+from google.auth.transport.requests import AuthorizedSession
 from google.auth.transport.requests import Request
+from google.oauth2 import service_account
+from google.cloud import bigquery
+from google.cloud import storage
+from google.cloud import bigquery_storage
+
 
 class GoogleCloud:
     ''' 
