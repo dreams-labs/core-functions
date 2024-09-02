@@ -13,22 +13,18 @@ from google.oauth2 import service_account
 from .googlecloud import GoogleCloud as dgc
 
 
-def configure_logger():
+def setup_logger():
     '''
-    Retrieves an existing logger if one exists, otherwise creates a new silent logger object. \
-        This can be used at the start of any function that uses logging to avoid repeated \
-        logger configurations.
-
-    returns:
-    - logger (logging object): a logger object that either retains existing logging settings or \
-        creates a new silent logger
+    creates a logger and sets it as a global variable
     '''
+    logging.basicConfig(
+        level=logging.INFO,
+        format='[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s',
+        datefmt='%d/%b/%Y %H:%M:%S'
+    )
+    global logger
     logger = logging.getLogger(__name__)
-    if not logger.handlers:
-        handler = logging.NullHandler()
-        logger.addHandler(handler)
 
-    return logger
 
 def human_format(number):
     '''
