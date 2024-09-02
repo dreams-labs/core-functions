@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dreams_core"
-version = "0.2.16"
+version = "0.2.17"
 authors = [
   { name="tentabs", email="tentabs00@gmail.com" },
 ]
@@ -16,6 +16,7 @@ dependencies = [
   "pandas>=1.5.3",
   "numpy>=1.19.5",
   "aiohttp>=3.8.5",
+  "google-api-core>=2.19.0",
   "google-auth>=2.22.0",
   "google-auth-httplib2>=0.1.0",
   "google-auth-oauthlib>=1.0.0",
