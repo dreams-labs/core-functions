@@ -20,6 +20,7 @@ from google.oauth2 import service_account
 from google.cloud import bigquery
 from google.cloud import storage
 from google.cloud import bigquery_storage
+import gspread
 
 
 class GoogleCloud:
@@ -44,6 +45,7 @@ class GoogleCloud:
             "https://www.googleapis.com/auth/cloud-platform",
             "https://www.googleapis.com/auth/drive",
             "https://www.googleapis.com/auth/bigquery",
+            "https://spreadsheets.google.com/feeds"
         ]
         try:
             self.credentials = service_account.Credentials.from_service_account_file(
@@ -363,3 +365,34 @@ class GoogleCloud:
             async with session.get(url, headers={"Authorization": f"Bearer {creds.token}"} ) as resp:
                 # Log the response
                 self.logger.info('%s: %s' % (resp.status, await resp.text()))
+
+
+    def read_google_sheet(self, spreadsheet_id, range_name):
+        """
+        Reads data from a specified Google Sheet and returns it as a Pandas DataFrame.
+
+        Args:
+            spreadsheet_id (str): The ID of the Google Sheet. 
+                Example: '1X6AJWBJHisADvyqoXwEvTPi1JSNReVU_woNW32Hz_yQ'
+            
+            range_name (str): The range of cells to read, formatted as 'SheetName!Range'.
+                Example: 'gcs_export!A:K'
+
+        Returns:
+            pd.DataFrame: The data from the specified range as a Pandas DataFrame. The first row of the range is used as the header.
+
+        """
+        # Create credentials using the service account
+        client = gspread.authorize(self.credentials)
+
+        # Open the spreadsheet and get the data
+        sheet = client.open_by_key(spreadsheet_id)
+        worksheet = sheet.worksheet(range_name.split('!')[0])
+        data = worksheet.get(range_name.split('!')[1])
+
+        # Convert to DataFrame
+        df = pd.DataFrame(data[1:], columns=data[0])
+
+        self.logger.info(f'Loaded df with dimensions {df.shape} from Google Sheet {spreadsheet_id} {range_name}.')
+
+        return df
