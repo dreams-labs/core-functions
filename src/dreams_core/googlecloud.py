@@ -262,7 +262,8 @@ class GoogleCloud:
             upload_df (pandas.DataFrame): The DataFrame to upload
             dataset_id (str): BigQuery dataset ID
             table_id (str): BigQuery table ID
-            project_id (str): GCP project ID
+            if_exists (str): If the table already exists, either 'append', 'replace', or 'fail'
+
         Returns:
             None
         '''
