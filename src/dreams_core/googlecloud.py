@@ -14,6 +14,7 @@ import pandas as pd
 import aiohttp
 import pandas_gbq
 import google.auth
+from google.api_core.exceptions import NotFound
 from google.auth.transport.requests import AuthorizedSession
 from google.auth.transport.requests import Request
 from google.oauth2 import service_account
@@ -275,6 +276,9 @@ class GoogleCloud:
             # 1. Try to retrieve schema from BigQuery
             schema = self.get_table_schema(dataset_id, table_id)
 
+            # Add updated_at column first to ensure it exists before dtype mapping
+            upload_df['updated_at'] = datetime.datetime.now(utc)
+
             # 2. Set df datatypes based on schema
             dtype_mapping = {field['name']: field['type'] for field in schema}
             dtype_mapping = {
@@ -298,17 +302,12 @@ class GoogleCloud:
             upload_df = upload_df.astype(dtype_mapping)
             logger.info('Prepared upload df with %s rows.', len(upload_df))
 
+        except NotFound:
+            logger.warning(f'Table {table_id} does not exist. Creating a new table with the DataFrame schema.')
+            schema = None  # Set schema to None to trigger table creation
         except Exception as e:
-            logger.warning(f'Failed to retrieve schema or apply dtype mapping: {e}')
-            logger.info('Assuming table does not exist and applying schema from upload_df.')
-
-        # Format datetime columns (this applies regardless of whether the table exists)
-        upload_df['updated_at'] = datetime.datetime.now(utc)
-        for col in upload_df.select_dtypes(include=['datetime64']).columns:
-            if upload_df[col].dt.tz is None:
-                upload_df[col] = pd.to_datetime(upload_df[col]).dt.tz_localize(utc).astype('datetime64[us, UTC]')
-            else:
-                upload_df[col] = upload_df[col].astype('datetime64[us, UTC]')
+            logger.error(f'Failed to retrieve schema or apply dtype mapping: {e}')
+            raise
 
         # 3. Upload df to BigQuery
         table_name = f'{dataset_id}.{table_id}'
@@ -327,10 +326,11 @@ class GoogleCloud:
                     'BOOLEAN' if pd.api.types.is_bool_dtype(upload_df[col]) else
                     'STRING'  # fallback for any other types
                 )
-            } for col in upload_df.columns] if 'replace' in if_exists or 'fail' in if_exists else None,
+            } for col in upload_df.columns] if schema is None or 'replace' in if_exists or 'fail' in if_exists else None,
             progress_bar=False
         )
         logger.info('Uploaded df to %s.', table_name)
+
 
 
     def trigger_cloud_function(self, url):
