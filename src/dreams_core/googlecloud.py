@@ -278,10 +278,12 @@ class GoogleCloud:
             # 2. Set df datatypes based on schema
             dtype_mapping = {field['name']: field['type'] for field in schema}
             dtype_mapping = {
-                key: (str if value == 'string' else
+                key: (
+                    str if value == 'string' else
                     int if value == 'integer' else
                     float if value == 'float64' else
-                    'datetime64[us, UTC]' if value == 'datetime' else value)
+                    'datetime64[us, UTC]' if value == 'datetime' else value
+                )
                 for key, value in dtype_mapping.items()
             }
 
@@ -315,14 +317,20 @@ class GoogleCloud:
             table_name,
             project_id=self.project_id,
             if_exists=if_exists,
-            table_schema=[
-                {'name': col, 'type': 'STRING' if upload_df[col].dtype == object else 'FLOAT' if upload_df[col].dtype == float else 'INTEGER' if upload_df[col].dtype == int else 'TIMESTAMP'}
-                for col in upload_df.columns
-            ] if 'replace' in if_exists or 'fail' in if_exists else None,
+            table_schema=[{
+                'name': col,
+                'type': (
+                    'STRING' if pd.api.types.is_string_dtype(upload_df[col]) else
+                    'FLOAT' if pd.api.types.is_float_dtype(upload_df[col]) else
+                    'INTEGER' if pd.api.types.is_integer_dtype(upload_df[col]) else
+                    'DATETIME' if pd.api.types.is_datetime64_any_dtype(upload_df[col]) else
+                    'BOOLEAN' if pd.api.types.is_bool_dtype(upload_df[col]) else
+                    'STRING'  # fallback for any other types
+                )
+            } for col in upload_df.columns] if 'replace' in if_exists or 'fail' in if_exists else None,
             progress_bar=False
         )
         logger.info('Uploaded df to %s.', table_name)
-
 
 
     def trigger_cloud_function(self, url):
