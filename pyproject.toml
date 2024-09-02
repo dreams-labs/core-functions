@@ -20,10 +20,10 @@ dependencies = [
   "google-auth-httplib2>=0.1.0",
   "google-auth-oauthlib>=1.0.0",
   "google-cloud-bigquery>=3.12.0",
-  "google-cloud-bigquery-storage>=2.25.0"
+  "google-cloud-bigquery-storage>=2.25.0",
   "google-cloud-storage>=2.10.0",
-  "google-cloud-secret-manager>=2.3.0"
-  "pandas-gbq>=0.19.0",
+  "google-cloud-secret-manager>=2.3.0",
+  "pandas-gbq>=0.19.0"
 ]
 classifiers = [
     "Programming Language :: Python :: 3.11",
