@@ -25,6 +25,8 @@ def setup_logger():
     global logger
     logger = logging.getLogger(__name__)
 
+    return logger
+
 
 def human_format(number):
     '''
