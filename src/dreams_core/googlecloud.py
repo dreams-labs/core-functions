@@ -254,14 +254,15 @@ class GoogleCloud:
         Appends the provided DataFrame to the specified BigQuery table. 
 
         Steps:
-            1. Retrieve the schema from BigQuery
-            2. Explicitly map datatypes onto new dataframe upload_df
-            3. Upload using pandas_gbq
+            1. Check if the table exists in BigQuery
+            2. If the table exists, retrieve the schema and map datatypes onto new dataframe upload_df
+            3. If the table does not exist, use the schema of the upload_df for the new table
+            4. Upload the DataFrame using pandas_gbq
 
         Params:
             upload_df (pandas.DataFrame): The DataFrame to upload
-            dataset_id (str): BigQuery dataset ID
-            table_id (str): BigQuery table ID
+            dataset_id (str): BigQuery dataset ID, e.g. 'etl_pipelines'
+            table_id (str): BigQuery table ID, e.g. 'community_calls'
             if_exists (str): If the table already exists, either 'append', 'replace', or 'fail'
 
         Returns:
@@ -270,46 +271,58 @@ class GoogleCloud:
 
         logger = logging.getLogger(__name__)
 
-        # 1. Retrieve schema from BigQuery
-        # --------------------------------
-        schema = self.get_table_schema(dataset_id,table_id)
+        try:
+            # 1. Try to retrieve schema from BigQuery
+            schema = self.get_table_schema(dataset_id, table_id)
 
-        # 2. Format and map datatypes
-        # -----------------------------
+            # 2. Set df datatypes based on schema
+            dtype_mapping = {field['name']: field['type'] for field in schema}
+            dtype_mapping = {
+                key: (str if value == 'string' else
+                    int if value == 'integer' else
+                    float if value == 'float64' else
+                    'datetime64[us, UTC]' if value == 'datetime' else value)
+                for key, value in dtype_mapping.items()
+            }
 
-        # add updated_at column
+            # Clean data for type conversion
+            for col in upload_df.columns:
+                if dtype_mapping.get(col) == float:
+                    upload_df[col] = upload_df[col].replace({r'[^\d.]': ''}, regex=True).astype(float)
+                elif dtype_mapping.get(col) == int:
+                    upload_df[col] = upload_df[col].replace({r'[^\d]': ''}, regex=True).astype(int)
+
+            # Apply the dtype mapping
+            upload_df = upload_df.astype(dtype_mapping)
+            logger.info('Prepared upload df with %s rows.', len(upload_df))
+
+        except Exception as e:
+            logger.warning(f'Failed to retrieve schema or apply dtype mapping: {e}')
+            logger.info('Assuming table does not exist and applying schema from upload_df.')
+
+        # Format datetime columns (this applies regardless of whether the table exists)
         upload_df['updated_at'] = datetime.datetime.now(utc)
-
-        # Localize datetime columns if they are not already timezone-aware
         for col in upload_df.select_dtypes(include=['datetime64']).columns:
             if upload_df[col].dt.tz is None:
                 upload_df[col] = pd.to_datetime(upload_df[col]).dt.tz_localize(utc).astype('datetime64[us, UTC]')
             else:
                 upload_df[col] = upload_df[col].astype('datetime64[us, UTC]')
 
-        # Set df datatypes based on schema
-        dtype_mapping = {field['name']: field['type'] for field in schema}
-        dtype_mapping = {
-            key: (str if value == 'string' else
-                    int if value == 'integer' else
-                    float if value == 'float64' else
-                    'datetime64[us, UTC]' if value == 'datetime' else value)
-            for key, value in dtype_mapping.items()
-        }
-        upload_df = upload_df.astype(dtype_mapping)
-        logger.info('Prepared upload df with %s rows.', len(upload_df))
-
         # 3. Upload df to BigQuery
-        # ------------------------
         table_name = f'{dataset_id}.{table_id}'
         pandas_gbq.to_gbq(
             upload_df,
             table_name,
             project_id=self.project_id,
             if_exists=if_exists,
+            table_schema=[
+                {'name': col, 'type': 'STRING' if upload_df[col].dtype == object else 'FLOAT' if upload_df[col].dtype == float else 'INTEGER' if upload_df[col].dtype == int else 'TIMESTAMP'}
+                for col in upload_df.columns
+            ] if 'replace' in if_exists or 'fail' in if_exists else None,
             progress_bar=False
         )
-        logger.info('Appended upload df to %s.', table_name)
+        logger.info('Uploaded df to %s.', table_name)
+
 
 
     def trigger_cloud_function(self, url):
