@@ -333,12 +333,14 @@ class GoogleCloud:
 
 
 
-    def trigger_cloud_function(self, url):
+    def trigger_cloud_function(self, url, timeout=300):
         """
         Synchronously trigger a function via an authenticated request.
 
         Args:
             url (str): The url of the cloud function to which the request is sent.
+            timeout (int): How many seconds to wait for the function to complete before \
+                returning a timeout error
 
         Description:
             1. Obtain credentials using service account file specified in the 
@@ -355,18 +357,20 @@ class GoogleCloud:
         authed_session = AuthorizedSession(creds)
         
         # Make an authenticated request
-        resp = authed_session.get(url)
+        resp = authed_session.get(url, timeout=timeout)
         
         # Log the response
         self.logger.info('%s: %s' % (resp.status_code, resp.text))
 
 
-    async def trigger_cloud_function_async(self, url):
+    async def trigger_cloud_function_async(self, url, timeout=300):
         """
         Asynchronously trigger a function via an authenticated request.
 
         Args:
             url (str): The url of the cloud function to which the request is sent.
+            timeout (int): How many seconds to wait for the function to complete before \
+                returning a timeout error.
 
         Description:
             1. Obtain credentials using service account file specified in the 
@@ -379,12 +383,12 @@ class GoogleCloud:
         creds = service_account.IDTokenCredentials.from_service_account_file(
             os.getenv('GOOGLE_APPLICATION_CREDENTIALS'), target_audience=url)
         
-        # refresh credentials to fix occassional 401 errors
+        # Refresh credentials to fix occasional 401 errors
         creds.refresh(Request())
 
         # Create an authenticated session
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers={"Authorization": f"Bearer {creds.token}"} ) as resp:
+            async with session.get(url, headers={"Authorization": f"Bearer {creds.token}"}, timeout=timeout) as resp:
                 # Log the response
                 self.logger.info('%s: %s' % (resp.status, await resp.text()))
 
