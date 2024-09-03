@@ -154,7 +154,8 @@ def translate_chain(
     # if the input chain alias could be found, store its id and name in a dictionary
     chain_dict = {
         'chain_id': input_chain_nicknames_df['chain_id'].iloc[0],
-        'chain_name': input_chain_nicknames_df['chain'].iloc[0]
+        'chain_name': input_chain_nicknames_df['chain'].iloc[0],
+        'is_case_sensitive': input_chain_nicknames_df['is_case_sensitive'].iloc[0]
     }
 
     # add all additional chain aliases to the dictionary
