@@ -220,7 +220,7 @@ class GoogleCloud:
 
 
     def get_table_schema(
-            self, 
+            self,
             dataset_id,
             table_id
         ):
@@ -352,7 +352,7 @@ class GoogleCloud:
         # Obtain credentials
         creds = service_account.IDTokenCredentials.from_service_account_file(
             os.getenv('GOOGLE_APPLICATION_CREDENTIALS'), target_audience=url)
-        
+
         # Create an authenticated session
         authed_session = AuthorizedSession(creds)
 
@@ -362,7 +362,7 @@ class GoogleCloud:
 
         # Make an authenticated request
         resp = authed_session.get(url, timeout=timeout)
-        
+
         # Log the response
         self.logger.info('%s: %s' % (resp.status_code, resp.text))
 
@@ -389,7 +389,7 @@ class GoogleCloud:
         # Obtain credentials
         creds = service_account.IDTokenCredentials.from_service_account_file(
             os.getenv('GOOGLE_APPLICATION_CREDENTIALS'), target_audience=url)
-        
+
         # Refresh credentials to fix occasional 401 errors
         creds.refresh(Request())
 
