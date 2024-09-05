@@ -94,7 +94,7 @@ class GoogleCloud:
         query_job = client.query(query_sql)
         query_df = query_job.to_dataframe()
 
-        self.logger.info('BigQuery query completed.')
+        self.logger.debug('BigQuery query completed.')
 
         return query_df
 
@@ -143,11 +143,12 @@ class GoogleCloud:
             blob = bucket.blob(filepath)
             blob.upload_from_string(query_df.to_csv(index=False), content_type='text/csv')
 
-            self.logger.info('returned fresh csv and refreshed cache')
+            self.logger.debug('returned fresh csv and refreshed cache')
+
         else:
             query_df = pd.read_csv(f'gs://{self.bucket_name}/{filepath}')
 
-            self.logger.info('returned cached csv')
+            self.logger.debug('returned cached csv')
 
         return query_df
 
