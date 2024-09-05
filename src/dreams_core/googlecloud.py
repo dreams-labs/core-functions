@@ -270,7 +270,6 @@ class GoogleCloud:
         Returns:
             None
         '''
-
         logger = logging.getLogger(__name__)
 
         try:
@@ -333,7 +332,6 @@ class GoogleCloud:
         logger.info('Uploaded df to %s.', table_name)
 
 
-
     async def trigger_cloud_function(self, url, params=None, timeout=300, async_trigger=False):
         """
         Trigger a Google Cloud Function synchronously or asynchronously with parameters.
@@ -372,7 +370,6 @@ class GoogleCloud:
             authed_session = AuthorizedSession(creds)
             resp = authed_session.get(url, timeout=timeout)
             self.logger.info('%s: %s' % (resp.status_code, resp.text))
-
 
 
     def read_google_sheet(self, spreadsheet_id, range_name):
