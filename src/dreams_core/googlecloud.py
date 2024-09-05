@@ -332,44 +332,76 @@ class GoogleCloud:
         logger.info('Uploaded df to %s.', table_name)
 
 
-    async def trigger_cloud_function(self, url, params=None, timeout=300, async_trigger=False):
+    def trigger_cloud_function(self, url, params=None, timeout=300):
         """
-        Trigger a Google Cloud Function synchronously or asynchronously with parameters.
+        Synchronously trigger a function via an authenticated request.
 
         Args:
-            url (str): The URL of the cloud function to which the request is sent.
+            url (str): The url of the cloud function to which the request is sent.
             params (dict): A dictionary of query parameters to include in the request.
-            timeout (int): How many seconds to wait for the function to complete before
+            timeout (int): How many seconds to wait for the function to complete before \
                 returning a timeout error.
-            async_trigger (bool): If True, the request will be sent asynchronously.
 
         Description:
-            1. Obtain credentials using the service account file specified in the
+            1. Obtain credentials using service account file specified in the 
             'GOOGLE_APPLICATION_CREDENTIALS' environment variable.
             2. Create an authenticated session using the obtained credentials.
             3. Make an authenticated GET request to the provided URL with query parameters.
             4. Log the response status and content.
         """
-        # Obtain credentials and refresh them to fix some 401 errors
+        # Obtain credentials
         creds = service_account.IDTokenCredentials.from_service_account_file(
             os.getenv('GOOGLE_APPLICATION_CREDENTIALS'), target_audience=url)
+        
+        # Create an authenticated session
+        authed_session = AuthorizedSession(creds)
+
+        # Append query parameters to the URL, if provided
+        if params:
+            url += '?' + urlencode(params)
+
+        # Make an authenticated request
+        resp = authed_session.get(url, timeout=timeout)
+        
+        # Log the response
+        self.logger.info('%s: %s' % (resp.status_code, resp.text))
+
+        return resp.text
+
+
+    async def trigger_cloud_function_async(self, url, params=None, timeout=300):
+        """
+        Asynchronously trigger a function via an authenticated request.
+
+        Args:
+            url (str): The url of the cloud function to which the request is sent.
+            params (dict): A dictionary of query parameters to include in the request.
+            timeout (int): How many seconds to wait for the function to complete before \
+                returning a timeout error.
+
+        Description:
+            1. Obtain credentials using service account file specified in the 
+            'GOOGLE_APPLICATION_CREDENTIALS' environment variable.
+            2. Create an authenticated session using the obtained credentials.
+            3. Make an authenticated GET request to the provided URL with query parameters.
+            4. Log the response status and content.
+        """
+        # Obtain credentials
+        creds = service_account.IDTokenCredentials.from_service_account_file(
+            os.getenv('GOOGLE_APPLICATION_CREDENTIALS'), target_audience=url)
+        
+        # Refresh credentials to fix occasional 401 errors
         creds.refresh(Request())
 
         # Append query parameters to the URL, if provided
         if params:
             url += '?' + urlencode(params)
 
-        # Trigger the function synchronously or asynchronously
-        if async_trigger:
-            # Asynchronous request
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, headers={"Authorization": f"Bearer {creds.token}"}, timeout=timeout) as resp:
-                    self.logger.info('%s: %s' % (resp.status, await resp.text()))
-        else:
-            # Synchronous request
-            authed_session = AuthorizedSession(creds)
-            resp = authed_session.get(url, timeout=timeout)
-            self.logger.info('%s: %s' % (resp.status_code, resp.text))
+        # Create an authenticated session
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers={"Authorization": f"Bearer {creds.token}"}, timeout=timeout) as resp:
+                # Log the response
+                self.logger.info('%s: %s' % (resp.status, await resp.text()))
 
 
     def read_google_sheet(self, spreadsheet_id, range_name):
