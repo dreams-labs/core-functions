@@ -403,6 +403,8 @@ class GoogleCloud:
                 # Log the response
                 self.logger.info('%s: %s' % (resp.status, await resp.text()))
 
+                return resp.text
+
 
     def read_google_sheet(self, spreadsheet_id, range_name):
         """
