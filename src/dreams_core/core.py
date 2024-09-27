@@ -1,10 +1,8 @@
 '''
-this module includes core functions for the dreams labs data ecosystem. functions included here 
-are designed to be broadly applicable and resuable across many projects. functions speciifc to 
-individual tools such as dune/bigquery/etc are available in other modules within this directory. 
+this module includes core functions for the dreams labs data ecosystem. functions included here
+are designed to be broadly applicable and resuable across many projects. functions speciifc to
+individual tools such as dune/bigquery/etc are available in other modules within this directory.
 '''
-# pylint: disable=C0301
-
 import logging
 import numpy as np
 import google.auth
@@ -19,11 +17,11 @@ def setup_logger():
     '''
     logging.basicConfig(
         level=logging.INFO,
-        format='[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s',
+        format='[%(asctime)s] %(levelname)s [%(module)s.%(funcName)s:%(lineno)d] %(message)s',
         datefmt='%d/%b/%Y %H:%M:%S'
     )
-    global logger
-    logger = logging.getLogger(__name__)
+    global logger  # pylint: disable=W0601
+    logger = logging.getLogger()
 
     return logger
 
@@ -143,7 +141,8 @@ def translate_chain(
 
 
     # filter the df of all aliases for the input chain
-    input_chain_nicknames_df = chain_nicknames_df[chain_nicknames_df['chain_reference'] == input_chain]
+    input_chain_nicknames_df = chain_nicknames_df[
+        chain_nicknames_df['chain_reference'] == input_chain]
 
     # if the input chain alias couldn't be found, return empty dict
     if input_chain_nicknames_df.empty:
