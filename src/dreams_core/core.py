@@ -125,7 +125,7 @@ def translate_chain(
         dict: A dictionary with all available chain aliases.
     '''
 
-    # retreive chain ids for all aliases
+    # retrieve chain ids for all aliases
     query_sql = '''
         select cn.chain_id
         ,cn.chain_reference

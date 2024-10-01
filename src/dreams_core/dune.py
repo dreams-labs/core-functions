@@ -1,10 +1,10 @@
 '''
-dreams labs functions that related to dune api interactions. 
+dreams labs functions that related to dune api interactions.
 
 IMPORTANT: much of this code can be done more simply with the dune python sdk (see
 https://docs.dune.com/api-reference/overview/sdks for more information). for the standard process
-of running sql and retrieving results in a dataframe, it is recommended to use the dune sdk 
-function dune.run_query_dataframe() rather than multiple functions within this package. 
+of running sql and retrieving results in a dataframe, it is recommended to use the dune sdk
+function dune.run_query_dataframe() rather than multiple functions within this package.
 '''
 
 import io
@@ -76,7 +76,7 @@ def check_query_status(
 
     param: dune_api_key <string> the dune API key
     param: execution_id <int> the query execution ID
-    
+
     return: query_status <string> the status of the query
     '''
     headers = {"X-DUNE-API-KEY": dune_api_key}
@@ -112,7 +112,7 @@ def get_query_results(
     return: query_df <dataframe> the dataframe of results if valid
     '''
 
-    # retreive the results
+    # retrieve the results
     headers = {"X-DUNE-API-KEY": dune_api_key}
     url = "https://api.dune.com/api/v1/execution/"+str(execution_id)+"/results/csv"
     response = requests.request("GET", url, headers=headers, timeout=30)
