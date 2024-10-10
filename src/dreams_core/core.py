@@ -168,3 +168,50 @@ def translate_chain(
         print(f'retrieved chain nicknames for {str(chain_dict.keys())}')
 
     return chain_dict
+
+
+def safe_downcast(df, column, dtype):
+    """
+    Safe method to downcast a column datatype. If the column has no values that exceed the
+    limits of the new dtype, it will be downcasted. It it has values that will result in
+    overflow errors, it will raise a warning and return the original df.
+
+    Params:
+    - df (pd.DataFrame): the dataframe with the column to be downcasted
+    - column (string): the name of the column to downcast
+    - dtype (string): the dtype to apply to the column
+
+    Returns:
+    - df (pd.DataFrame): the dataframe with the column either downcasted if it was safe to
+        do so, or unaltered if not.
+    """
+    # Get the original dtype of the column
+    original_dtype = df[column].dtype
+
+    # Get the min and max values of the column
+    col_min = df[column].min()
+    col_max = df[column].max()
+
+    # Get the limits of the target dtype
+    if dtype in ['float32', 'float64']:
+        type_info = np.finfo(dtype)
+    elif dtype in ['int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64']:
+        type_info = np.iinfo(dtype)
+    else:
+        logger.error("Unsupported dtype: %s", dtype)
+        return df
+
+    # Check if the column values are within the limits of the target dtype
+    if col_min < type_info.min or col_max > type_info.max:
+        logger.warning("Cannot safely downcast column '%s' to %s. "
+                       "Values are outside the range of %s. "
+                       "Min: %s, Max: %s",
+                       column, dtype, dtype, col_min, col_max)
+        return df
+
+    # If we've made it here, it's safe to downcast
+    df[column] = df[column].astype(dtype)
+
+    logger.debug("Successfully downcasted column '%s' from %s to %s",
+                column, original_dtype, dtype)
+    return df
