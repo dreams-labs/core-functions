@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dreams_core"
-version = "0.2.23"
+version = "0.2.24"
 authors = [
   { name="tentabs", email="tentabs00@gmail.com" },
 ]
