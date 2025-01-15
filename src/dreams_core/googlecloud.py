@@ -1,8 +1,8 @@
-'''
+"""
 common functions for interacting with BigQuery within the dreams labs data ecosystem. all
 functions are initiated through the BigQuery() class which contains credentials, project ids, and
-other relevant metadata. 
-'''
+other relevant metadata.
+"""
 # pylint: disable=C0301
 
 import datetime
@@ -26,15 +26,15 @@ import gspread
 
 
 class GoogleCloud:
-    ''' 
+    """
     A class to interact with BigQuery. This class is designed
     to be used in the context of the Dreams project. It is not
     intended to be a general purpose BigQuery class.
 
-    Params: 
+    Params:
         service_account_json (str): Path to the service account JSON file. if no value is input \
         the functions will default to using the path in the env var GOOGLE_APPLICATION_CREDENTIALS
-    '''
+    """
 
     def __init__(
             self,
@@ -54,7 +54,7 @@ class GoogleCloud:
                 service_account_json_path
                 ,scopes=scopes
             )
-        except Exception as e: 
+        except Exception as e:
             self.credentials, _ = google.auth.default()
 
         # other variables
@@ -72,16 +72,16 @@ class GoogleCloud:
             self,
             query_sql
         ):
-        '''
-        runs a query and returns results as a dataframe. the service account credentials to 
+        """
+        runs a query and returns results as a dataframe. the service account credentials to
         grant access are autofilled to a general service account. there are likely security
-        optimizations that will need to be done in the future. 
+        optimizations that will need to be done in the future.
 
         param: query_sql <string> the query to run
         param: location <string> the location of the bigquery project
         param: project <string> the project ID of the bigquery project
         return: query_df <dataframe> the query result
-        '''
+        """
         # prepare credentials using a service account stored in GCP secrets manager
 
 
@@ -105,7 +105,7 @@ class GoogleCloud:
             cache_file_name,
             freshness=24,
         ):
-        '''
+        """
         tries to use a cached result of a query from gcs. if it doesn't exist or
         is stale, reruns the query and returns fresh results.
 
@@ -115,7 +115,7 @@ class GoogleCloud:
         param: cache_file_name <string> what to name the cache
         param: freshness <float> how many hours before a refresh is required
         return query_df <dataframe> the cached or fresh result of the query
-        '''
+        """
 
         filepath = f'cache/query_{cache_file_name}.csv'
         client = storage.Client(project=self.project_name, credentials=self.credentials)
@@ -160,9 +160,9 @@ class GoogleCloud:
             filename,
             bucket_name='dreams-labs-storage',
         ):
-        '''
+        """
         uploads a file to google cloud storage. currently accepted input formats are \
-        dataframes or dicts. 
+        dataframes or dicts.
 
         Params:
             data: <dict> or <dataframe> the data to upload
@@ -170,7 +170,7 @@ class GoogleCloud:
             filename: <string> the name the gcs file will be given, e.g. 'aioz-network.json'
             project_name: <string> google cloud project name
             bucket_name: <string> GCS bucket name
-        '''
+        """
 
         # adjust filename to append filetype if one isn't included
         if '.' in filename:
@@ -253,8 +253,8 @@ class GoogleCloud:
             table_id,
             if_exists='append'
         ):
-        '''
-        Appends the provided DataFrame to the specified BigQuery table. 
+        """
+        Appends the provided DataFrame to the specified BigQuery table.
 
         Steps:
             1. Check if the table exists in BigQuery
@@ -270,7 +270,7 @@ class GoogleCloud:
 
         Returns:
             None
-        '''
+        """
         logger = logging.getLogger(__name__)
 
         try:
@@ -344,7 +344,7 @@ class GoogleCloud:
                 returning a timeout error.
 
         Description:
-            1. Obtain credentials using service account file specified in the 
+            1. Obtain credentials using service account file specified in the
             'GOOGLE_APPLICATION_CREDENTIALS' environment variable.
             2. Create an authenticated session using the obtained credentials.
             3. Make an authenticated GET request to the provided URL with query parameters.
@@ -381,7 +381,7 @@ class GoogleCloud:
                 returning a timeout error.
 
         Description:
-            1. Obtain credentials using service account file specified in the 
+            1. Obtain credentials using service account file specified in the
             'GOOGLE_APPLICATION_CREDENTIALS' environment variable.
             2. Create an authenticated session using the obtained credentials.
             3. Make an authenticated GET request to the provided URL with query parameters.
@@ -412,9 +412,9 @@ class GoogleCloud:
         Reads data from a specified Google Sheet and returns it as a Pandas DataFrame.
 
         Args:
-            spreadsheet_id (str): The ID of the Google Sheet. 
+            spreadsheet_id (str): The ID of the Google Sheet.
                 Example: '1X6AJWBJHisADvyqoXwEvTPi1JSNReVU_woNW32Hz_yQ'
-            
+
             range_name (str): The range of cells to read, formatted as 'SheetName!Range'.
                 Example: 'gcs_export!A:K'
 
